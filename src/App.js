@@ -2,20 +2,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 const App = () => {
-  const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
+  const [buttonPosition, setButtonPosition] = useState({ x: 100, y: 100 });
   const [isMoving, setIsMoving] = useState(false);
+  const [caught, setCaught] = useState(false);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!buttonRef.current || !containerRef.current) return;
+      if (!buttonRef.current || !containerRef.current || caught) return;
       
       const button = buttonRef.current;
       const container = containerRef.current;
       const buttonRect = button.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
       
-      // Calculate distance between mouse and button center
       const buttonCenterX = buttonRect.left + buttonRect.width / 2;
       const buttonCenterY = buttonRect.top + buttonRect.height / 2;
       const mouseX = e.clientX;
@@ -26,30 +27,14 @@ const App = () => {
         Math.pow(mouseY - buttonCenterY, 2)
       );
       
-      // If mouse is close (within 100px), move the button away
       if (distance < 100) {
         setIsMoving(true);
         
-        // Calculate container boundaries
-        const containerRect = container.getBoundingClientRect();
         const maxX = containerRect.width - buttonRect.width;
         const maxY = containerRect.height - buttonRect.height;
         
-        // Calculate move direction (away from mouse)
-        const directionX = buttonCenterX - mouseX;
-        const directionY = buttonCenterY - mouseY;
-        
-        // Normalize and scale the movement
-        const magnitude = Math.sqrt(directionX * directionX + directionY * directionY);
-        const normalizedX = directionX / magnitude * 50;
-        const normalizedY = directionY / magnitude * 50;
-        
-        // Calculate new position, keeping button within container
-        let newX = buttonPosition.x + normalizedX;
-        let newY = buttonPosition.y + normalizedY;
-        
-        newX = Math.max(0, Math.min(maxX, newX));
-        newY = Math.max(0, Math.min(maxY, newY));
+        let newX = Math.max(0, Math.min(maxX, buttonPosition.x + (Math.random() * 200 - 100)));
+        let newY = Math.max(0, Math.min(maxY, buttonPosition.y + (Math.random() * 200 - 100)));
         
         setButtonPosition({ x: newX, y: newY });
       } else {
@@ -62,22 +47,25 @@ const App = () => {
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [buttonPosition]);
+  }, [buttonPosition, caught]);
 
   return (
     <div className="hello-container" ref={containerRef}>
-      <h1>Hello React</h1>
-      <p>Welcome to my application, Brijesh</p>
-      <button 
-        ref={buttonRef}
-        style={{
-          transform: `translate(${buttonPosition.x}px, ${buttonPosition.y}px)`,
-          position: 'relative',
-          transition: isMoving ? 'none' : 'transform 0.5s ease-out'
-        }}
-      >
-        Get Started
-      </button>
+      <h1>{caught ? "You got me! 🎉" : "Catch Me If You Can!"}</h1>
+      <p>{caught ? "You win! 🎊" : "Try clicking the button before it escapes!"}</p>
+      {!caught && (
+        <button 
+          ref={buttonRef}
+          style={{
+            transform: `translate(${buttonPosition.x}px, ${buttonPosition.y}px)`,
+            position: 'absolute',
+            transition: isMoving ? 'none' : 'transform 0.2s ease-out'
+          }}
+          onClick={() => setCaught(true)}
+        >
+          Catch Me
+        </button>
+      )}
     </div>
   );
 };
